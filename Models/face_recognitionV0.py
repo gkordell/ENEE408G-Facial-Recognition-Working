@@ -64,10 +64,10 @@ model.add(Dense(4096, kernel_initializer = RandomNormal(mean=0.0, stddev=0.01), 
 model.add(Dropout(.5))
 model.add(Dense(num_classes, kernal_initializer = RandomNormal(mean=0.0, stddev=0.01), activation = 'softmax'))
 
-model.save('facial_recognitionV0_untrained.h5')
-
 #compile, fit, and evaluate model
 model.compile(loss=categorical_crossentropy, optimizer=SGD(lr = .001, momentum = .9, decay = .0005), metrics=['accuracy'])
+
+model.save('facial_recognitionV0_untrained.h5')
 
 model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, verbose=1) #reomved validation_data=(x_test,y_test)
 
