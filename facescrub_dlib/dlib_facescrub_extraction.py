@@ -27,7 +27,7 @@ print('done concatenation of training data')
 del x_train_raw_1
 del x_train_raw_2
 del x_train_raw_3
-#%%
+
 x_test_raw = sio.loadmat('./DataWithMean/test_data_with_mean.mat')['test_data']
 print('done loading test data')
 
@@ -47,19 +47,16 @@ length = x_train_raw.shape[3]
 
 train_features = np.zeros([128,length])
 f = np.zeros(128)
+d = dlib.rectangle(0,0,200,200)     #order of args is left, top, right, bottom
 for i in range(length):
     img = x_train_raw[:,:,:,i]
-    dets = detector(img, 1)
-    for k, d in enumerate(dets):
-        # let the dlib find the shape of where the face is (can't find a way to avoid this)
-        shape = sp(img, d)
-        # run the face descriptor
-        face_desc = facerec.compute_face_descriptor(img, shape)
-        # save this face descriptor object in a numpy array
-        for j in range(128):
-            f[j] = face_desc[j]
-        # append to features array, same index as the original array
-        train_features[:,i] = f
+    shape = sp(img, d)
+    face_desc = facerec.compute_face_descriptor(img, shape)
+    # save this face descriptor object in a numpy array
+    for j in range(128):
+        f[j] = face_desc[j]
+    # append to features array, same index as the original array
+    train_features[:,i] = f
     print('calculating on training data ',i)
 
 # Save as a new .mat file
@@ -75,19 +72,16 @@ length = x_test_raw.shape[3]
 
 test_features = np.zeros([128,length])
 f = np.zeros(128)
+d = dlib.rectangle(0,0,200,200)     #order of args is left, top, right, bottom
 for i in range(length):
     img = x_test_raw[:,:,:,i]
-    dets = detector(img, 1)
-    for k, d in enumerate(dets):
-        # let the dlib find the shape of where the face is (can't find a way to avoid this)
-        shape = sp(img, d)
-        # run the face descriptor
-        face_desc = facerec.compute_face_descriptor(img, shape)
-        # save this face descriptor object in a numpy array
-        for j in range(128):
-            f[j] = face_desc[j]
-        # append to features array, same index as the original array
-        test_features[:,i] = f
+    shape = sp(img, d)
+    face_desc = facerec.compute_face_descriptor(img, shape)
+    # save this face descriptor object in a numpy array
+    for j in range(128):
+        f[j] = face_desc[j]
+    # append to features array, same index as the original array
+    test_features[:,i] = f
     print('calculating on test data ',i)
     
 # Save as a new .mat file
