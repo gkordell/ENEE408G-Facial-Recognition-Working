@@ -40,11 +40,11 @@ shape = np.asarray([d.top(), d.bottom(), d.left(), d.right()])
 im_just_face = np.asarray(im[shape[0]:shape[1],shape[2]:shape[3]])
 
 # Now re-save the image as just the face area
-imgio.imwrite(image_filename,im_just_face,'JPG')
+#imgio.imwrite(image_filename,im_just_face,'JPG')
 
+im_just_face = np.reshape(im_just_face, [1, im_just_face.shape[0], im_just_face.shape[1], im_just_face.shape[2]])
 
 ## AUGMENT THE INPUT IMAGE ---------------------------------------------------------------------
-
 
 # Use batchsize parameter of 64 
 num_target = 20  # create 20 augmented images from each input image
@@ -59,14 +59,12 @@ train_datagen_obj = ImageDataGenerator(
       fill_mode='nearest')
 
 train_generator = train_datagen_obj.flow(
-        image_filename,
-        target_size=(image_size, image_size),
-        batch_size=train_batchsize,
-        class_mode='categorical')
+        im_just_face,
+        batch_size=64)
  
-aug_results = np.zeros([num_target,200,200,3])
+aug_results = np.zeros([num_target, 1, im_just_face.shape[1], im_just_face.shape[2], 3])
 
 for i in range(20):
     temp = train_generator.next()
-    aug_results[i,:,:,:] = temp[0][1]
+    aug_results[i,:,:,:,:] = temp
 
