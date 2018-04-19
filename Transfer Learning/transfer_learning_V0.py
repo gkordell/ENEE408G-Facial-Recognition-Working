@@ -99,13 +99,6 @@ x_test = x_test_aug
 ## STEP 5 ---------------------------------------------------------------------
 ## Re-load the trained keras model into temporary temp_model
 
-#temp_model = Sequential()
-#temp_model.add(Dense(512, kernel_initializer = RandomNormal(mean=0.0,stddev=.01), activation = 'relu', input_dim=input_dim))
-#temp_model.add(Dense(1024, kernel_initializer = RandomNormal(mean=0.0,stddev=.01), activation = 'relu'))
-#temp_model.add(Dropout(.5))
-#temp_model.add(Dense(current_num_classes, kernel_initializer = RandomNormal(mean=0.0,stddev=.01), activation = 'softmax'))
-#
-#temp_model.load_weights('dlib_classifierV0_trained_c530.h5')
 temp_model = load_model('dlib_classifierV0_trained_c530.h5')
 
 ## STEP 6 ---------------------------------------------------------------------
@@ -135,12 +128,16 @@ new_model.get_layer('input').set_weights([w[0],w[1]])
 new_model.get_layer('dense_1').set_weights([w[2],w[3]])
 new_model.get_layer('dense_2').set_weights([w[4],w[5]])
 
+# Freeze all but the last layer
+new_model.get_layer('input').trainable = False
+new_model.get_layer('dense_1').trainable = False
+
 ## STEP 7 ---------------------------------------------------------------------
 ## Re-Train the model!!
 
 input_dim = 128
 batch_size = 64
-epochs = 30
+epochs = 10
 
 new_model.compile(loss = categorical_crossentropy, optimizer = 'SGD', metrics = ['accuracy'])
 history = new_model.fit(x_train, y_train, batch_size = batch_size, epochs = epochs)
@@ -151,7 +148,32 @@ print('Overall Test accuracy:', overall_score[1])
 #%%
     # this is used to evaluate how well the new net does on JUST the new images
 x_new_test = new_features
-y_new_test = np.concatenate([to_categorical(new_y_train_cats, current_num_classes+1),to_categorical(new_y_test_cats, current_num_classes+1)])
+y_new_test = np.concatenate([np.squeeze(to_categorical(new_y_train_cats, current_num_classes+1)),np.squeeze(to_categorical(new_y_test_cats, current_num_classes+1))])
 new_only_score = new_model.evaluate(x_new_test, y_new_test, verbose=0)
 print(' Test loss on just the new images:', new_only_score[0])
 print(' Test accuracy on just the new images:', new_only_score[1])
+
+
+#%%
+# Now save the new model and the new training data
+# Save file while be appended with the number of classes in the filename
+model_save_str = 'dlib_classifierV0_trained_c'+str(current_num_classes+1)+'.h5'
+new_model.save(model_save_str)
+
+# Save the training&test data/labels
+train_features_dict = {}
+train_features_dict['train_features'] = x_train
+sio.savemat('dlib_features/train_features_c'+str(current_num_classes+1)+'.mat',train_features_dict)
+
+test_features_dict = {}
+test_features_dict['test_features'] = x_test
+sio.savemat('dlib_features/train_features_c'+str(current_num_classes+1)+'.mat',test_features_dict)
+
+train_class_dict = {}
+train_class_dict['training_class'] = y_train
+sio.savemat('Class/training_class_c'+str(current_num_classes+1)+'.mat',train_class_dict)
+
+test_class_dict = {}
+test_class_dict['test_class'] = y_test
+sio.savemat('Class/test_class_c'+str(current_num_classes+1)+'.mat',test_class_dict)
+
