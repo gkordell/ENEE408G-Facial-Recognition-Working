@@ -167,7 +167,7 @@ sio.savemat('dlib_features/train_features_c'+str(current_num_classes+1)+'.mat',t
 
 test_features_dict = {}
 test_features_dict['test_features'] = x_test
-sio.savemat('dlib_features/train_features_c'+str(current_num_classes+1)+'.mat',test_features_dict)
+sio.savemat('dlib_features/test_features_c'+str(current_num_classes+1)+'.mat',test_features_dict)
 
 train_class_dict = {}
 train_class_dict['training_class'] = y_train
