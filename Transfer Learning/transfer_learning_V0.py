@@ -10,7 +10,7 @@ TRANSFER LEARNING STEPS SUMMARY
 1. Load the known feature-extracted dataset via sio.loadmat('dlib_features/train_features.mat')['train_features']
 2. Get the new image of the new person, and generate augmented images from it
 3. On the new images, and use dlib to find the face and extract the features
-        # on this part, use example from http://dlib.net/face_recognition.py.html for guidance
+        # on this part, use example from http://dlib.net/face_recognition.py.html for guidance 
         # USE THE SCRIPT feature_extract_augment.py to do steps 2-3
 4. Add subset of the new face features to train and test sets from step 1
 5. Load already-trained keras model weights
@@ -111,7 +111,7 @@ w_fc2 = w[4] # get the weights for the second fully connected layer
 #   I'm not sure how to control the standard deviation here, but they are limited to (-.05,.05)
 new_weights = (2*random([w_fc2.shape[0], 1])-1)/200
 w_fc2 = np.concatenate([w_fc2,new_weights],1)
-#w[4] = w_fc2 # put this back where it was after messing with it
+w[4] = w_fc2 # put this back where it was after messing with it
 w_out = w[5] # get the weights for the output layer
 new_weight = (2*random()-1)/200
 w_out = np.append(w_out,new_weight) # add a new random weight to the output layer
@@ -129,7 +129,7 @@ new_model.add(Dense(current_num_classes+1, kernel_initializer = RandomNormal(mea
 
 new_model.get_layer('input').set_weights([w[0],w[1]])
 new_model.get_layer('dense_1').set_weights([w[2],w[3]])
-new_model.get_layer('dense_2').set_weights([w_fc2,w_out])
+new_model.get_layer('dense_2').set_weights([w[4],w[5]])
 
 ## STEP 7 ---------------------------------------------------------------------
 ## Re-Train the model!!
