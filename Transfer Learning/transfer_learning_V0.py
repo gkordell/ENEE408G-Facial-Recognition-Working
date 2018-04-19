@@ -51,8 +51,8 @@ y_test = sio.loadmat('Class/test_class.mat')['test_class']
 current_num_classes = np.max(y_train) + 1   # this assumes that all classes are present in y
 
 
-x_train = np.reshape(x_train,[36213,128])
-x_test = np.reshape(x_test,[15519,128])
+x_train = np.transpose(x_train)
+x_test = np.transpose(x_test)
 
 ## STEPS 2-3 ---------------------------------------------------------------------
 num_to_augment = 50
@@ -83,9 +83,16 @@ y_test = np.squeeze(y_test)
 current_num_train_samples = y_train.shape[0]
 current_num_test_samples = y_test.shape[0]
 
+x_train_aug = np.zeros([x_train.shape[0]+num_train,128])
+x_test_aug = np.zeros([x_test.shape[0]+num_to_augment-num_train,128])
+x_train_aug[0:x_train.shape[0],:] = x_train
+x_test_aug[0:x_test.shape[0],:] = x_test
+x_train_aug[x_train.shape[0]:x_train_aug.shape[0],:] = new_features[0:num_train,:]
+x_test_aug[x_test.shape[0]:x_test_aug.shape[0],:] = new_features[num_train:num_to_augment,:]
+
 # Add the new samples to the train and test samples
-x_train = np.concatenate([x_train,new_features[0:num_train,:]])
-x_test = np.concatenate([x_test,new_features[num_train:num_to_augment,:]])
+x_train = x_train_aug
+x_test = x_test_aug
 
 
 #%%
@@ -124,9 +131,9 @@ new_model.add(Dense(1024, kernel_initializer = RandomNormal(mean=0.0,stddev=.01)
 new_model.add(Dropout(.5))
 new_model.add(Dense(current_num_classes+1, kernel_initializer = RandomNormal(mean=0.0,stddev=.01), activation = 'softmax', name = 'dense_2'))
 
-#new_model.get_layer('input').set_weights([w[0],w[1]])
-#new_model.get_layer('dense_1').set_weights([w[2],w[3]])
-#new_model.get_layer('dense_2').set_weights([w[4],w[5]])
+new_model.get_layer('input').set_weights([w[0],w[1]])
+new_model.get_layer('dense_1').set_weights([w[2],w[3]])
+new_model.get_layer('dense_2').set_weights([w[4],w[5]])
 
 ## STEP 7 ---------------------------------------------------------------------
 ## Re-Train the model!!
@@ -135,16 +142,16 @@ input_dim = 128
 batch_size = 64
 epochs = 30
 
-temp_model.compile(loss = categorical_crossentropy, optimizer = 'adam', metrics = ['accuracy'])
-history = temp_model.fit(x_train, y_train[:,0:530], batch_size = batch_size, epochs = epochs)
+new_model.compile(loss = categorical_crossentropy, optimizer = 'SGD', metrics = ['accuracy'])
+history = new_model.fit(x_train, y_train, batch_size = batch_size, epochs = epochs)
 
-overall_score = temp_model.evaluate(x_test, y_test, verbose=0)
+overall_score = new_model.evaluate(x_test, y_test, verbose=0)
 print('Overall Test loss:', overall_score[0])
 print('Overall Test accuracy:', overall_score[1])
 #%%
     # this is used to evaluate how well the new net does on JUST the new images
 x_new_test = new_features
-y_new_test = np.concatenate([new_y_train_rows, new_y_test_rows])
-new_only_score = temp_model.evaluate(x_new_test, y_new_test, verbose=0)
+y_new_test = np.concatenate([to_categorical(new_y_train_cats, current_num_classes+1),to_categorical(new_y_test_cats, current_num_classes+1)])
+new_only_score = new_model.evaluate(x_new_test, y_new_test, verbose=0)
 print(' Test loss on just the new images:', new_only_score[0])
 print(' Test accuracy on just the new images:', new_only_score[1])
