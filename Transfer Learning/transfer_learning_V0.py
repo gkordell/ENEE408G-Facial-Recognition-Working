@@ -50,13 +50,9 @@ y_test = sio.loadmat('Class/test_class.mat')['test_class']
 
 current_num_classes = np.max(y_train) + 1   # this assumes that all classes are present in y
 
-y_train = to_categorical(y_train, current_num_classes)
-y_test = to_categorical(y_test, current_num_classes)
 
 x_train = np.reshape(x_train,[36213,128])
 x_test = np.reshape(x_test,[15519,128])
-y_train = np.squeeze(y_train)
-y_test = np.squeeze(y_test)
 
 ## STEPS 2-3 ---------------------------------------------------------------------
 num_to_augment = 50
@@ -68,27 +64,30 @@ new_features = np.transpose(new_features)
 
 num_train = 30  # how many out of the augmented new images will be put in train
                 # rest will be put in test
+
+new_y_train_cats = np.zeros([1,num_train])
+new_y_train_cats[0,:] = current_num_classes
+new_y_test_cats = np.zeros([1,num_to_augment-num_train])
+new_y_test_cats[0,:] = current_num_classes
+
+
+y_train = np.concatenate([y_train,new_y_train_cats],1)
+y_test = np.concatenate([y_test,new_y_test_cats],1)
+
+y_train = to_categorical(y_train, current_num_classes+1)
+y_test = to_categorical(y_test, current_num_classes+1)
+
+y_train = np.squeeze(y_train)
+y_test = np.squeeze(y_test)
                 
 current_num_train_samples = y_train.shape[0]
 current_num_test_samples = y_test.shape[0]
-extra_train_zero_cols = np.zeros([current_num_train_samples, 1])
-extra_test_zero_cols = np.zeros([current_num_test_samples, 1])
-new_y_train_rows = np.zeros([num_train, current_num_classes+1])
-new_y_test_rows = np.zeros([num_to_augment - num_train, current_num_classes+1])
-new_y_train_rows[:,-1] = 1
-new_y_test_rows[:,-1] = 1
 
 # Add the new samples to the train and test samples
 x_train = np.concatenate([x_train,new_features[0:num_train,:]])
 x_test = np.concatenate([x_test,new_features[num_train:num_to_augment,:]])
 
-# Add a new column to the right on y_train and y_test
-y_train = np.concatenate([y_train,extra_train_zero_cols],1)
-y_test = np.concatenate([y_test,extra_test_zero_cols],1)
 
-# Add new rows for the new image samples
-y_train = np.concatenate([y_train,new_y_train_rows])
-y_test = np.concatenate([y_test,new_y_test_rows])
 #%%
 ## STEP 5 ---------------------------------------------------------------------
 ## Re-load the trained keras model into temporary temp_model
@@ -118,8 +117,6 @@ w_out = np.append(w_out,new_weight) # add a new random weight to the output laye
 w[5] = w_out # put this back where you found it
 
 
-#%%
-
 # Now make the new model with current_C+1 output classes, and stick the new weights in
 new_model = Sequential()
 new_model.add(Dense(512, kernel_initializer = RandomNormal(mean=0.0,stddev=.01), activation = 'relu', input_dim=128, name = 'input'))
@@ -127,9 +124,9 @@ new_model.add(Dense(1024, kernel_initializer = RandomNormal(mean=0.0,stddev=.01)
 new_model.add(Dropout(.5))
 new_model.add(Dense(current_num_classes+1, kernel_initializer = RandomNormal(mean=0.0,stddev=.01), activation = 'softmax', name = 'dense_2'))
 
-new_model.get_layer('input').set_weights([w[0],w[1]])
-new_model.get_layer('dense_1').set_weights([w[2],w[3]])
-new_model.get_layer('dense_2').set_weights([w[4],w[5]])
+#new_model.get_layer('input').set_weights([w[0],w[1]])
+#new_model.get_layer('dense_1').set_weights([w[2],w[3]])
+#new_model.get_layer('dense_2').set_weights([w[4],w[5]])
 
 ## STEP 7 ---------------------------------------------------------------------
 ## Re-Train the model!!
@@ -138,16 +135,16 @@ input_dim = 128
 batch_size = 64
 epochs = 30
 
-new_model.compile(loss = categorical_crossentropy, optimizer = 'adam', metrics = ['accuracy'])
-history = new_model.fit(x_train, y_train, batch_size = batch_size, epochs = epochs)
+temp_model.compile(loss = categorical_crossentropy, optimizer = 'adam', metrics = ['accuracy'])
+history = temp_model.fit(x_train, y_train[:,0:530], batch_size = batch_size, epochs = epochs)
 
-overall_score = new_model.evaluate(x_test, y_test, verbose=0)
+overall_score = temp_model.evaluate(x_test, y_test, verbose=0)
 print('Overall Test loss:', overall_score[0])
 print('Overall Test accuracy:', overall_score[1])
 #%%
     # this is used to evaluate how well the new net does on JUST the new images
 x_new_test = new_features
 y_new_test = np.concatenate([new_y_train_rows, new_y_test_rows])
-new_only_score = new_model.evaluate(x_new_test, y_new_test, verbose=0)
+new_only_score = temp_model.evaluate(x_new_test, y_new_test, verbose=0)
 print(' Test loss on just the new images:', new_only_score[0])
 print(' Test accuracy on just the new images:', new_only_score[1])
