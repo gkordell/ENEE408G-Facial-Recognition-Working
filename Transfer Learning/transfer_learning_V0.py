@@ -43,16 +43,16 @@ from img_augment_extract import augment_and_extract_features
 
 ## STEP 1 ---------------------------------------------------------------------
 #import data
-x_train = sio.loadmat('dlib_features/train_features.mat')['train_features']
-x_test = sio.loadmat('dlib_features/test_features.mat')['test_features']
-y_train = sio.loadmat('Class/training_class.mat')['training_class']
-y_test = sio.loadmat('Class/test_class.mat')['test_class']
+x_train = sio.loadmat('dlib_features/train_features_c531.mat')['train_features']
+x_test = sio.loadmat('dlib_features/test_features_c531.mat')['test_features']
+y_train = sio.loadmat('Class/training_class_c531.mat')['training_class']
+y_test = sio.loadmat('Class/test_class_c531.mat')['test_class']
 
 current_num_classes = np.max(y_train) + 1   # this assumes that all classes are present in y
 
-
-x_train = np.transpose(x_train)
-x_test = np.transpose(x_test)
+if x_train.shape[1] > x_train.shape[0]: # then they need to be transposed
+    x_train = np.transpose(x_train)
+    x_test = np.transpose(x_test)
 
 ## STEPS 2-3 ---------------------------------------------------------------------
 num_to_augment = 50
@@ -99,7 +99,7 @@ x_test = x_test_aug
 ## STEP 5 ---------------------------------------------------------------------
 ## Re-load the trained keras model into temporary temp_model
 
-temp_model = load_model('dlib_classifierV0_trained_c530.h5')
+temp_model = load_model('dlib_classifierV0_trained_c531.h5')
 
 ## STEP 6 ---------------------------------------------------------------------
 ## Increase the size of the output layer, add more weights to network's 2nd hidden layer 
@@ -137,7 +137,7 @@ new_model.get_layer('dense_1').trainable = False
 
 input_dim = 128
 batch_size = 64
-epochs = 10
+epochs = 3
 
 new_model.compile(loss = categorical_crossentropy, optimizer = 'SGD', metrics = ['accuracy'])
 history = new_model.fit(x_train, y_train, batch_size = batch_size, epochs = epochs)
@@ -159,6 +159,10 @@ print(' Test accuracy on just the new images:', new_only_score[1])
 # Save file while be appended with the number of classes in the filename
 model_save_str = 'dlib_classifierV0_trained_c'+str(current_num_classes+1)+'.h5'
 new_model.save(model_save_str)
+
+# convert y-train and y-test back to single vector and not one-hot matrix
+y_train = np.argmax(y_train,1)
+y_test = np.argmax(y_test,1)
 
 # Save the training&test data/labels
 train_features_dict = {}
