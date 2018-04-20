@@ -1,4 +1,4 @@
-
+#argv[1] is path to image (unnecessary??), argv[2] is it's label
 
 # ONLINE LEARNING STEPS SUMMARY
 # 1. Get the new image of the new person, and generate augmented images from it
@@ -22,14 +22,15 @@ import numpy as np
 # import dlib
 
 #define paramters of model
-aug_num = 1
+aug_num = 50
+epochs = 40
 
 ### ONLINE LEARNING ---------------------------------------------------------
 ## STEP 1 ---------------------------------------------------------------------
 #import new image, get features
-# images, x = augment_and_extract_features('train_base_online/image/1144d9ab29825e4b5f29f0497b78a593f627c0ea.jpg', aug_num)
-x_train = np.random.rand(128,1)
-y_train = np.array([0]) # ? How to get label? parameter?
+images, x = augment_and_extract_features(argv[1], aug_num)
+# x_train = np.ones([128,aug_num])*0.1
+y_train = np.ones([1, aug_num])*argv[2] # ? How to get label? parameter?
 # get testing data
 x_test = sio.loadmat('../Transfer Learning/dlib_features/test_features.mat')['test_features']
 y_test = sio.loadmat('../Transfer Learning/Class/test_class.mat')['test_class']
@@ -47,7 +48,7 @@ y_test = np.squeeze(y_test)
 
 ## STEP 2 ---------------------------------------------------------------------
 #load pretrained model
-model = load_model('../Models/dlib_classifierV0_untrained.h5')
+model = load_model('../Models/dlib_classifierV0_trained.h5')
 
 ## STEP 3 ---------------------------------------------------------------------
 #retrain model with new face
@@ -55,11 +56,10 @@ model = load_model('../Models/dlib_classifierV0_untrained.h5')
 history = model.fit(
 	x_train, 
 	y_train,
-	batch_size = aug_num,
-	epochs = 3,
+	epochs = epochs,
 	validation_data = (x_test, y_test))
 
 
-model.save_weights('small_last5.h5')
+model.save_weights('../Models/dlib_classifierV0_trained.h5')
 
 
