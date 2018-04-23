@@ -30,6 +30,7 @@ from keras.utils import to_categorical
 from keras.models import Sequential, load_model
 from keras.layers import Conv2D, MaxPooling2D, Dense, Dropout, Flatten
 from keras.optimizers import *
+from keras.callbacks import Callback
 from keras.losses import categorical_crossentropy
 from keras.initializers import *
 from keras.activations import *
@@ -43,10 +44,10 @@ from img_augment_extract import augment_and_extract_features
 if __name__ == "__main__":
     ## STEP 1 ---------------------------------------------------------------------
     #import data
-    x_train = sio.loadmat('dlib_features/train_features_modified.mat')['train_features']
-    x_test = sio.loadmat('dlib_features/test_features_modified.mat')['test_features']
-    y_train = sio.loadmat('Class/training_class_modified.mat')['training_class']
-    y_test = sio.loadmat('Class/test_class_modified.mat')['test_class']
+    x_train = sio.loadmat('dlib_features/train_features.mat')['train_features']
+    x_test = sio.loadmat('dlib_features/test_features.mat')['test_features']
+    y_train = sio.loadmat('Class/training_class.mat')['training_class']
+    y_test = sio.loadmat('Class/test_class.mat')['test_class']
     
     current_num_classes = np.max(y_train) + 1   # this assumes that all classes are present in y
     
@@ -99,7 +100,7 @@ if __name__ == "__main__":
     ## STEP 5 ---------------------------------------------------------------------
     ## Re-load the trained keras model into temporary temp_model
     
-    temp_model = load_model('dlib_classifierV0_trained_modified.h5')
+    temp_model = load_model('dlib_classifierV0_trained.h5')
     
     ## STEP 6 ---------------------------------------------------------------------
     ## Increase the size of the output layer, add more weights to network's 2nd hidden layer 
@@ -137,21 +138,28 @@ if __name__ == "__main__":
     
     input_dim = 128
     batch_size = 64
-    epochs = 3
+    epochs = 20
+    
+    x_new_test = new_features
+    y_new_test = np.concatenate([np.squeeze(to_categorical(new_y_train_cats, current_num_classes+1)),np.squeeze(to_categorical(new_y_test_cats, current_num_classes+1))])
+    
+    class NewImgAccuracy(Callback):
+        def on_epoch_end(self, batch, logs={}):
+            new_only_score = new_model.evaluate(x_new_test, y_new_test, verbose=0)
+            print(' Test loss on just the new images:', new_only_score[0])
+            print(' Test accuracy on just the new images:', new_only_score[1])
+    
+    print_new_acc = NewImgAccuracy()
     
     new_model.compile(loss = categorical_crossentropy, optimizer = 'SGD', metrics = ['accuracy'])
-    history = new_model.fit(x_train, y_train, batch_size = batch_size, epochs = epochs)
+    history = new_model.fit(x_train, y_train, batch_size = batch_size, epochs = epochs, callbacks = [print_new_acc])
     
     overall_score = new_model.evaluate(x_test, y_test, verbose=0)
     print('Overall Test loss:', overall_score[0])
     print('Overall Test accuracy:', overall_score[1])
     #%%
         # this is used to evaluate how well the new net does on JUST the new images
-    x_new_test = new_features
-    y_new_test = np.concatenate([np.squeeze(to_categorical(new_y_train_cats, current_num_classes+1)),np.squeeze(to_categorical(new_y_test_cats, current_num_classes+1))])
-    new_only_score = new_model.evaluate(x_new_test, y_new_test, verbose=0)
-    print(' Test loss on just the new images:', new_only_score[0])
-    print(' Test accuracy on just the new images:', new_only_score[1])
+    
     
     
     #%%
