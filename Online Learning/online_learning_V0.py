@@ -28,9 +28,9 @@ epochs = 40
 ### ONLINE LEARNING ---------------------------------------------------------
 ## STEP 1 ---------------------------------------------------------------------
 #import new image, get features
-images, x = augment_and_extract_features(argv[1], aug_num)
+images, x_train = augment_and_extract_features(argv[1], aug_num)
 # x_train = np.ones([128,aug_num])*0.1
-y_train = np.ones([1, aug_num])*argv[2] # ? How to get label? parameter?
+y_train = np.ones([1, aug_num])*argv[2] # ? How to get label?
 # get testing data
 x_test = sio.loadmat('../Transfer Learning/dlib_features/test_features.mat')['test_features']
 y_test = sio.loadmat('../Transfer Learning/Class/test_class.mat')['test_class']
