@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 # argv 1 should be the saved JPEG Image of the input face
 if __name__ == "__main__":
     #filename = sys.argv[1]
-    filename = 'Al_Pacino_0001.jpg'
+    filename = 'Peter_Deaville_0001.JPEG'
     #filename = 'Adam_Sandler_0001.jpg'
     #filename = 'Al_Pacino_0001.jpg'
     #filename = 'Aaron_Sorkin_0001.jpg'
@@ -38,8 +38,8 @@ if __name__ == "__main__":
         face_area = (d.right()-d.left())*(d.bottom()-d.top())
         shape = np.asarray([d.top(), d.bottom(), d.left(), d.right()])
         pct_coverage = face_area/total_im_area
-        if pct_coverage > 0.3:
-            if scores[0] > 2:
+        if pct_coverage > 0.1:
+            if scores[0] > 1:
                 face_good = True       
         if face_good == True:
             print('2')      #face is present AND good
