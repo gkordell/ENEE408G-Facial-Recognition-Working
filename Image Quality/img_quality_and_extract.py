@@ -40,10 +40,11 @@ if __name__ == "__main__":
         pct_coverage = face_area/total_im_area
         if pct_coverage > 0.3:
             if scores[0] > 2:
-                face_good = True
-                
-    if face_good == True:
-        print('Good Face!')
+                face_good = True       
+        if face_good == True:
+            print('Out 2')      #face is present AND good
+        else:
+            print('Out 1')      #face is present AND not good
     else:
-        print('Bad Face! Try again')
+        print('Out 0')          #face is NOT detected
         
