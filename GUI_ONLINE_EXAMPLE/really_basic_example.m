@@ -89,15 +89,55 @@ function pushbutton2_Callback(hObject, eventdata, handles)
     img = getsnapshot(vid);
     img = ycbcr2rgb(img);
     imwrite(img,'testfile.JPEG');
+    
+    % Call petes function into car quality python(
+    % 2 = good face and here
+    % 1 = face and bad quality
+    % 0 = no face seen
+    
+    % convert to a number
+    quality = str2num(quality);
+    
+    if quality == 2
+        % call recognition and load num_names store id in name
+        
+        answer = questdlg(sprintf('Is your username: %s', name));
+        if strcmp('Yes',answer) == 1
+            questdlg(sprintf('Welcome, %s', name));
+            % call online training
+            % close preview and program 
+            
+        else strcmp('Yes',answer) == 0
+            prompt = {'Enter your username:'};
+            actual_username = inputdlg(prompt)
+            % load names info and see if they are in dic. 
+            user_info = strsplit(python('load_names_info_dict.py', actual_username))'
+            if strcmp(char(user_info(1)),'Not in dict')==1;
+                questdlg(sprintf('Not in system. Please add yourself'));
+            else 
+                prompt = {'Enter your password:'};
+                actual_password = inputdlg(prompt)
+                if strcmp(char(user_info(4)),actual_password)==1;
+                    questdlg(sprintf('Welcome, %s', name));
+                    % call online training
+                    % close preview and program
+                else 
+                    questdlg(sprintf('invalid password: Please contact sys admin'));
+                    % close preview and program
+                end
+            end
+        end
+    end
 
 end
 
-% --- Executes on button press in pushbutton3.
+% --- Executes on button press in pushbutton3. // ie adding user
 function pushbutton3_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton3 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+    dict_size = (python('get_dict_size.py'));
+    
 end
 
 function edit1_Callback(hObject, eventdata, handles)
