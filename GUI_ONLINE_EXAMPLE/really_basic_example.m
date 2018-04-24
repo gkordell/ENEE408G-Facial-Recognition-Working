@@ -22,7 +22,7 @@ function varargout = really_basic_example(varargin)
 
 % Edit the above text to modify the response to help really_basic_example
 
-% Last Modified by GUIDE v2.5 24-Apr-2018 12:24:03
+% Last Modified by GUIDE v2.5 24-Apr-2018 12:52:17
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -42,7 +42,7 @@ else
     gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
-
+end
 
 % --- Executes just before really_basic_example is made visible.
 function really_basic_example_OpeningFcn(hObject, eventdata, handles, varargin)
@@ -53,14 +53,19 @@ function really_basic_example_OpeningFcn(hObject, eventdata, handles, varargin)
 % varargin   command line arguments to really_basic_example (see VARARGIN)
 
 % Choose default command line output for really_basic_example
+global vid
 handles.output = hObject;
+axes(handles.axes1);
+vid = videoinput('winvideo', 1, 'YUY2_640x480');
+hImage = image(zeros(480,640,3), 'Parent',handles.axes1);
+preview(vid, hImage);
 
 % Update handles structure
 guidata(hObject, handles);
 
 % UIWAIT makes really_basic_example wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
-
+end
 
 % --- Outputs from this function are returned to the command line.
 function varargout = really_basic_example_OutputFcn(hObject, eventdata, handles) 
@@ -71,14 +76,21 @@ function varargout = really_basic_example_OutputFcn(hObject, eventdata, handles)
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
-
+end
 
 % --- Executes on button press in pushbutton2.
 function pushbutton2_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+   
+    global vid
+    %closePreview(vid);
+    img = getsnapshot(vid);
+    img = ycbcr2rgb(img);
+    imwrite(img,'testfile.JPEG');
 
+end
 
 % --- Executes on button press in pushbutton3.
 function pushbutton3_Callback(hObject, eventdata, handles)
@@ -86,7 +98,7 @@ function pushbutton3_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
+end
 
 function edit1_Callback(hObject, eventdata, handles)
 % hObject    handle to edit1 (see GCBO)
@@ -95,7 +107,7 @@ function edit1_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of edit1 as text
 %        str2double(get(hObject,'String')) returns contents of edit1 as a double
-
+end
 
 % --- Executes during object creation, after setting all properties.
 function edit1_CreateFcn(hObject, eventdata, handles)
@@ -107,4 +119,5 @@ function edit1_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
 end
