@@ -39,40 +39,52 @@ import numpy as np
 from numpy.random import random
 from keras.preprocessing.image import ImageDataGenerator
 import dlib
+from os import listdir
 
 from img_augment_extract import augment_and_extract_features
 if __name__ == "__main__":
     ## STEP 1 ---------------------------------------------------------------------
     #import data
-    x_train = sio.loadmat('dlib_features/train_features.mat')['train_features']
-    x_test = sio.loadmat('dlib_features/test_features.mat')['test_features']
-    y_train = sio.loadmat('Class/training_class.mat')['training_class']
-    y_test = sio.loadmat('Class/test_class.mat')['test_class']
+    x_train = sio.loadmat('dlib_features/train_features_modified.mat')['train_features']
+    x_test = sio.loadmat('dlib_features/test_features_modified.mat')['test_features']
+    y_train = sio.loadmat('Class/training_class_modified.mat')['training_class']
+    y_test = sio.loadmat('Class/test_class_modified.mat')['test_class']
     
-    current_num_classes = np.max(y_train) + 1   # this assumes that all classes are present in y
+    current_num_classes = int(np.max(y_train) + 1)   # this assumes that all classes are present in y
     
     if x_train.shape[1] > x_train.shape[0]: # then they need to be transposed
         x_train = np.transpose(x_train)
         x_test = np.transpose(x_test)
     
     ## STEPS 2-3 ---------------------------------------------------------------------
-    num_to_augment = 50
-    new_image_filename = './new_img/Alan_Greenspan/Alan_Greenspan_0001.jpg'
-    [aug_images, new_features] = augment_and_extract_features(new_image_filename, num_to_augment)
-    new_features = np.transpose(new_features)
+    num_to_generate = 140
+    new_image_dir = './new_img/Chris_DeFrancisci/'
+    fnames = listdir(new_image_dir)
+    new_features = np.zeros((1,128))
+    num_to_augment = int(num_to_generate/len(fnames) + 1)
+    for name in fnames:
+        [aug_images, temp_features] = augment_and_extract_features(new_image_dir+name, num_to_augment)
+        temp_features = np.transpose(temp_features)
+        new_features = np.concatenate([new_features,temp_features])
+    new_features = new_features[1:-1,:]
+    num_generated = new_features.shape[0]
     
     ## STEP 4 ---------------------------------------------------------------------
     
-    num_train = 30  # how many out of the augmented new images will be put in train
+    num_train = 105   # how many out of the augmented new images will be put in train
                     # rest will be put in test
     
     new_y_train_cats = np.zeros([1,num_train])
     new_y_train_cats[0,:] = current_num_classes
-    new_y_test_cats = np.zeros([1,num_to_augment-num_train])
+    new_y_test_cats = np.zeros([1,num_generated-num_train])
     new_y_test_cats[0,:] = current_num_classes
     
-    
-    y_train = np.concatenate([y_train,new_y_train_cats],1)
+    # repeat each new image in the training set to require fewer epochs to improve accuracy on new images
+    # the repeated versions won't be saved in the new modified dataset
+    num_to_repeat = 1
+    for i in range(num_to_repeat):
+        y_train = np.concatenate([y_train,new_y_train_cats],1)
+        
     y_test = np.concatenate([y_test,new_y_test_cats],1)
     
     y_train = to_categorical(y_train, current_num_classes+1)
@@ -85,14 +97,16 @@ if __name__ == "__main__":
     current_num_test_samples = y_test.shape[0]
     
     x_train_aug = np.zeros([x_train.shape[0]+num_train,128])
-    x_test_aug = np.zeros([x_test.shape[0]+num_to_augment-num_train,128])
+    x_test_aug = np.zeros([x_test.shape[0]+num_generated-num_train,128])
     x_train_aug[0:x_train.shape[0],:] = x_train
     x_test_aug[0:x_test.shape[0],:] = x_test
-    x_train_aug[x_train.shape[0]:x_train_aug.shape[0],:] = new_features[0:num_train,:]
-    x_test_aug[x_test.shape[0]:x_test_aug.shape[0],:] = new_features[num_train:num_to_augment,:]
     
-    # Add the new samples to the train and test samples
-    x_train = x_train_aug
+    # repeat each new training sample as above with y_train
+    for i in range(num_to_repeat):
+        x_train = np.concatenate([x_train,new_features[0:num_train,:]])
+    x_test_aug[x_test.shape[0]:x_test_aug.shape[0],:] = new_features[num_train:num_generated,:]
+    
+    # Add the new samples to the test samples
     x_test = x_test_aug
     
     
@@ -100,7 +114,7 @@ if __name__ == "__main__":
     ## STEP 5 ---------------------------------------------------------------------
     ## Re-load the trained keras model into temporary temp_model
     
-    temp_model = load_model('dlib_classifierV0_trained.h5')
+    temp_model = load_model('dlib_classifierV0_trained_modified.h5')
     
     ## STEP 6 ---------------------------------------------------------------------
     ## Increase the size of the output layer, add more weights to network's 2nd hidden layer 
@@ -138,30 +152,40 @@ if __name__ == "__main__":
     
     input_dim = 128
     batch_size = 64
-    epochs = 20
     
-    x_new_test = new_features
-    y_new_test = np.concatenate([np.squeeze(to_categorical(new_y_train_cats, current_num_classes+1)),np.squeeze(to_categorical(new_y_test_cats, current_num_classes+1))])
+    x_added_test = x_test[15519:-1,:]
+    y_added_test = y_test[15519:-1,:]
+    x_added_train = x_train[36213:-1,:]
+    y_added_train = y_train[36213:-1,:]
     
+    new_img_acc_hist = []
+    
+    # this is used to evaluate how well the new net does on JUST the added images
+    # it gets called on the end of each epoch as a callback in the fit function
     class NewImgAccuracy(Callback):
         def on_epoch_end(self, batch, logs={}):
-            new_only_score = new_model.evaluate(x_new_test, y_new_test, verbose=0)
+            new_only_score = new_model.evaluate(x_added_test, y_added_test, verbose=0)
             print(' Test loss on just the new images:', new_only_score[0])
             print(' Test accuracy on just the new images:', new_only_score[1])
+            new_img_acc_hist.append(new_only_score[1])
     
     print_new_acc = NewImgAccuracy()
     
-    new_model.compile(loss = categorical_crossentropy, optimizer = 'SGD', metrics = ['accuracy'])
+    new_model.compile(loss = categorical_crossentropy, optimizer = 'adam', metrics = ['accuracy'])
+    epochs = 4
+    history = new_model.fit(x_train, y_train, batch_size = batch_size, epochs = epochs, callbacks = [print_new_acc])
+    import keras.backend as K
+    current_lr = K.get_value(new_model.optimizer.lr)
+    new_lr = 20*current_lr
+    epochs = 30
+    history = new_model.fit(x_added_train, y_added_train,  batch_size = batch_size, epochs = epochs)
+    epochs = 1
     history = new_model.fit(x_train, y_train, batch_size = batch_size, epochs = epochs, callbacks = [print_new_acc])
     
     overall_score = new_model.evaluate(x_test, y_test, verbose=0)
     print('Overall Test loss:', overall_score[0])
     print('Overall Test accuracy:', overall_score[1])
-    #%%
-        # this is used to evaluate how well the new net does on JUST the new images
-    
-    
-    
+
     #%%
     # Now save the new model and the new training data
     # Save file while be appended with the number of classes in the filename
@@ -189,3 +213,19 @@ if __name__ == "__main__":
     test_class_dict['test_class'] = y_test
     sio.savemat('Class/test_class_modified.mat',test_class_dict)
     
+#%% Plotting
+    
+    
+#train_acc = history.history['acc']
+#val_acc = history.history['val_acc']
+#train_loss = history.history['loss']
+#val_loss = history.history['val_loss']
+
+#x = range(len(train_acc))
+#import matplotlib.pyplot as plt
+#plt.plot(x, train_acc, 'b', label='Training Accuracy')
+#plt.plot(x, val_acc, 'r', label='Validation Accuracy')
+#plt.title('Training and Validation accuracy')
+#plt.legend()
+ 
+#plt.figure()
