@@ -54,6 +54,7 @@ function really_basic_example_OpeningFcn(hObject, eventdata, handles, varargin)
 
 % Choose default command line output for really_basic_example
 global vid
+global count = 0;
 handles.output = hObject;
 axes(handles.axes1);
 vid = videoinput('winvideo', 1, 'YUY2_640x480');
@@ -89,6 +90,7 @@ function pushbutton2_Callback(hObject, eventdata, handles)
     img = getsnapshot(vid);
     img = ycbcr2rgb(img);
     imwrite(img,'testfile.JPEG');
+
     
     % Call petes function into car quality python(
     % 2 = good face and here
@@ -100,7 +102,7 @@ function pushbutton2_Callback(hObject, eventdata, handles)
     
     if quality == 2
         % call recognition and load num_names store id in name
-        
+ 
         answer = questdlg(sprintf('Is your username: %s', name));
         if strcmp('Yes',answer) == 1
             questdlg(sprintf('Welcome, %s', name));
@@ -113,27 +115,27 @@ function pushbutton2_Callback(hObject, eventdata, handles)
             % load names info and see if they are in dic. 
             user_info = strsplit(python('load_names_info_dict.py', actual_username))'
             if strcmp(char(user_info(1)),'Not in dict')==1;
-                questdlg(sprintf('Not in system. Please add yourself'));
+                msgbox('Not in system. Please add yourself');
             else 
                 prompt = {'Enter your password:'};
                 actual_password = inputdlg(prompt)
                 if strcmp(char(user_info(4)),actual_password)==1;
-                    questdlg(sprintf('Welcome, %s', name));
+                    msgbox(sprintf('Welcome, %s', name));
                     % call online training
                     % close preview and program
                 else 
-                    questdlg(sprintf('invalid password: Please contact sys admin'));
+                    msgbox('invalid password: Please contact sys admin');
                     % close preview and program
                 end
             end
         end
-    if quality == 1
-        questdlg(sprintf('The quality of the image is too low. Please retake the photo.'));
-    end
-    if quality == 0
-        questdlg(sprintf('Thats not a face... please retake the photo'));
+    elseif quality == 1
+        msgbox('The quality of the image is too low. Please retake the photo.');
+    elseif quality == 0
+        msgbox('Thats not a face... please retake the photo');
     end
 end
+
 
 % --- Executes on button press in pushbutton3. // ie adding user
 function pushbutton3_Callback(hObject, eventdata, handles)
@@ -142,43 +144,46 @@ function pushbutton3_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
     dict_size = (python('get_dict_size.py'));
     global vid
+    global count
     %closePreview(vid);
-    img = getsnapshot(vid);
-    img = ycbcr2rgb(img);
-    imwrite(img,'testfile.JPEG');
-    
-    % Call petes function into car quality python(
-    % 2 = good face and here
-    % 1 = face and bad quality
-    % 0 = no face seen
-    
-    % convert to a number
-    quality = str2num(quality);
-    % Call petes function into car quality python(
-    % 2 = good face and here
-    % 1 = face and bad quality
-    % 0 = no face seen
-    if quality == 2 
+    int i = 1;
+    im_file_names = ['testfile1.JPEG';'testfile2.JPEG';'testfile3.JPEG';'testfile4.JPEG';'testfile5.JPEG'];
+    while (i<6)
+        img = getsnapshot(vid);
+        img = ycbcr2rgb(img);
+        imwrite(img,im_file_names(i,:));
+        pause(1);
+
+        % Call petes function into car quality python(
+        % 2 = good face and here
+        % 1 = face and bad quality
+        % 0 = no face seen
+
+        % convert to a number
+        quality = str2num(quality);
+        % Call petes function into car quality python(
+        % 2 = good face and here
+        % 1 = face and bad quality
+        % 0 = no face seen
+        if quality == 2 
+
+        msgbox(sprintf('Picture %n taken', i));
+        i = i+1;
+        end
+
+    end 
     prompt = {'Enter your username:'};
     actual_username = inputdlg(prompt)   
-    
+
     prompt = {'Enter your password:'};
     actual_password = inputdlg(prompt) 
-    
+    msgbox(sprintf('Welcome, %s', actual_username));
+
     % call  append_dict.py
     % with something like 
     % python('append_dict.py', dict_size+1, actual_username, actual_password);
-    questdlg(sprintf('Welcome, %s', actual_username));
     % call augmentation 
     % call transfer learning
-    
-    end 
-    if quality == 1
-        questdlg(sprintf('The quality of the image is too low. Please retake the photo by pressing the add user button.'));
-    end
-    if quality == 0
-        questdlg(sprintf('Thats not a face... please retake the photo'));
-    end 
 end
 
 function edit1_Callback(hObject, eventdata, handles)
