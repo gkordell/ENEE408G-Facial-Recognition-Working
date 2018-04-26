@@ -43,6 +43,7 @@ from os import listdir
 
 from img_augment_extract import augment_and_extract_features
 if __name__ == "__main__":
+    new_img_dir = sys.argv[1]
     ## STEP 1 ---------------------------------------------------------------------
     #import data
     x_train = sio.loadmat('dlib_features/train_features_modified.mat')['train_features']
@@ -58,13 +59,13 @@ if __name__ == "__main__":
     
     ## STEPS 2-3 ---------------------------------------------------------------------
     num_to_generate = 140
-    new_image_dir = './new_img/Chris_DeFrancisci/'
+    #new_image_dir = './new_img/Gordon_Kordell/'
     fnames = listdir(new_image_dir)
     new_features = np.zeros((1,128))
     num_to_augment = int(num_to_generate/len(fnames) + 1)
     for name in fnames:
-        [aug_images, temp_features] = augment_and_extract_features(new_image_dir+name, num_to_augment)
-        temp_features = np.transpose(temp_features)
+        temp_features = augment_and_extract_features(new_image_dir+name, num_to_augment)
+        #temp_features = np.transpose(temp_features)
         new_features = np.concatenate([new_features,temp_features])
     new_features = new_features[1:-1,:]
     num_generated = new_features.shape[0]
@@ -173,13 +174,6 @@ if __name__ == "__main__":
     
     new_model.compile(loss = categorical_crossentropy, optimizer = 'adam', metrics = ['accuracy'])
     epochs = 4
-    history = new_model.fit(x_train, y_train, batch_size = batch_size, epochs = epochs, callbacks = [print_new_acc])
-    import keras.backend as K
-    current_lr = K.get_value(new_model.optimizer.lr)
-    new_lr = 20*current_lr
-    epochs = 30
-    history = new_model.fit(x_added_train, y_added_train,  batch_size = batch_size, epochs = epochs)
-    epochs = 1
     history = new_model.fit(x_train, y_train, batch_size = batch_size, epochs = epochs, callbacks = [print_new_acc])
     
     overall_score = new_model.evaluate(x_test, y_test, verbose=0)
