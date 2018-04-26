@@ -103,19 +103,21 @@ function pushbutton2_Callback(hObject, eventdata, handles)
     
     if quality == 2
         % call recognition and load num_names store id in name
+        id = python('testfile.JPEG');
+        name = python('load_num_names_dict.py',id);
         
- 
         answer = questdlg(sprintf('Is your username: %s', name));
         if strcmp('Yes',answer) == 1
             questdlg(sprintf('Welcome, %s', name));
             % call online training
             % close preview and program 
             
-        else strcmp('Yes',answer) == 0
+        elseif strcmp('Yes',answer) == 0
             prompt = {'Enter your username:'};
-            actual_username = inputdlg(prompt)
+            actual_username = inputdlg(prompt);
+         
             % load names info and see if they are in dic. 
-            user_info = strsplit(python('load_names_info_dict.py', actual_username))'
+            user_info = strsplit(python('load_names_info_dict.py', actual_username));
             if strcmp(char(user_info(1)),'Not in dict')==1;
                 msgbox('Not in system. Please add yourself');
             else 
@@ -124,7 +126,10 @@ function pushbutton2_Callback(hObject, eventdata, handles)
                 if strcmp(char(user_info(4)),actual_password)==1;
                     msgbox(sprintf('Welcome, %s', name));
                     % call online training
+                    python('online_learning_V0.py','testfile.JPEG',user_info(2))
                     % close preview and program
+                    msgbox('Goodbye');
+                    
                 else 
                     msgbox('invalid password: Please contact sys admin');
                     % close preview and program
@@ -149,7 +154,7 @@ function pushbutton3_Callback(hObject, eventdata, handles)
     global count
     %closePreview(vid);
     int i = 1;
-    im_file_names = ['testfile1.JPEG';'testfile2.JPEG';'testfile3.JPEG';'testfile4.JPEG';'testfile5.JPEG'];
+    im_file_names = ['newface/testfile1.JPEG';'newface/testfile2.JPEG';'newface/testfile3.JPEG';'newface/testfile4.JPEG';'newface/testfile5.JPEG'];
     while (i<6)
         img = getsnapshot(vid);
         img = ycbcr2rgb(img);
@@ -167,7 +172,7 @@ function pushbutton3_Callback(hObject, eventdata, handles)
         msgbox(sprintf('Picture %n taken', i));
         i = i+1;
         end
-
+        
     end 
     prompt = {'Enter your username:'};
     actual_username = inputdlg(prompt)   
@@ -179,8 +184,9 @@ function pushbutton3_Callback(hObject, eventdata, handles)
     % call  append_dict.py
     % with something like 
     python('append_dict.py', num2str(dict_size), actual_username, actual_password);
-    % call augmentation 
+    % call augmentation (Being done in transfer
     % call transfer learning
+    python('transfer_learning_V0.py','./newface');
 end
 
 function edit1_Callback(hObject, eventdata, handles)
