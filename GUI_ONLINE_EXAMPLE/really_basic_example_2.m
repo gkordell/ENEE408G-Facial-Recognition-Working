@@ -93,6 +93,7 @@ function pushbutton2_Callback(hObject, eventdata, handles)
 
     
     % Call petes function into car quality python(
+    quality = python('img_quality_and_extract.py','testfile.JPEG');
     % 2 = good face and here
     % 1 = face and bad quality
     % 0 = no face seen
@@ -102,6 +103,7 @@ function pushbutton2_Callback(hObject, eventdata, handles)
     
     if quality == 2
         % call recognition and load num_names store id in name
+        
  
         answer = questdlg(sprintf('Is your username: %s', name));
         if strcmp('Yes',answer) == 1
@@ -154,19 +156,14 @@ function pushbutton3_Callback(hObject, eventdata, handles)
         imwrite(img,im_file_names(i,:));
         pause(1);
 
-        % Call petes function into car quality python(
+        quality = python('img_quality_and_extract.py',im_file_names(i,:));
         % 2 = good face and here
         % 1 = face and bad quality
         % 0 = no face seen
 
         % convert to a number
         quality = str2num(quality);
-        % Call petes function into car quality python(
-        % 2 = good face and here
-        % 1 = face and bad quality
-        % 0 = no face seen
         if quality == 2 
-
         msgbox(sprintf('Picture %n taken', i));
         i = i+1;
         end
@@ -181,7 +178,7 @@ function pushbutton3_Callback(hObject, eventdata, handles)
 
     % call  append_dict.py
     % with something like 
-    % python('append_dict.py', dict_size+1, actual_username, actual_password);
+    python('append_dict.py', num2str(dict_size), actual_username, actual_password);
     % call augmentation 
     % call transfer learning
 end
