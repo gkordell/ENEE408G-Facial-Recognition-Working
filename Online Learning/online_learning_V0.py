@@ -18,48 +18,51 @@ from keras.initializers import *
 from keras.activations import *
 import scipy.io as sio
 import numpy as np
+import sys
 # from keras.preprocessing.image import ImageDataGenerator
 # import dlib
 
-#define paramters of model
-aug_num = 50
-epochs = 40
+if __name__ == "main":
 
-### ONLINE LEARNING ---------------------------------------------------------
-## STEP 1 ---------------------------------------------------------------------
-#import new image, get features
-images, x_train = augment_and_extract_features(argv[1], aug_num)
-# x_train = np.ones([128,aug_num])*0.1
-y_train = np.ones([1, aug_num])*argv[2] # ? How to get label?
-# get testing data
-x_test = sio.loadmat('../Transfer Learning/dlib_features/test_features.mat')['test_features']
-y_test = sio.loadmat('../Transfer Learning/Class/test_class.mat')['test_class']
+	#define paramters of model
+	aug_num = 50
+	epochs = 40
 
-current_num_classes = np.max(y_test) + 1   # this assumes that all classes are present in y
+	### ONLINE LEARNING ---------------------------------------------------------
+	## STEP 1 ---------------------------------------------------------------------
+	#import new image, get features
+	images, x_train = augment_and_extract_features(int(sys.argv[1]), aug_num)
+	# x_train = np.ones([128,aug_num])*0.1
+	y_train = np.ones([1, aug_num])*int(sys.argv[2]) # ? How to get label?
+	# get testing data
+	x_test = sio.loadmat('../Transfer Learning/dlib_features/test_features.mat')['test_features']
+	y_test = sio.loadmat('../Transfer Learning/Class/test_class.mat')['test_class']
 
-x_train = np.transpose(x_train)
-x_test = np.transpose(x_test)
+	current_num_classes = np.max(y_test) + 1   # this assumes that all classes are present in y
 
-y_train = to_categorical(y_train, current_num_classes)
-y_test = to_categorical(y_test, current_num_classes)
+	x_train = np.transpose(x_train)
+	x_test = np.transpose(x_test)
 
-y_train = np.squeeze(y_train)
-y_test = np.squeeze(y_test)
+	y_train = to_categorical(y_train, current_num_classes)
+	y_test = to_categorical(y_test, current_num_classes)
 
-## STEP 2 ---------------------------------------------------------------------
-#load pretrained model
-model = load_model('../Models/dlib_classifierV0_trained.h5')
+	y_train = np.squeeze(y_train)
+	y_test = np.squeeze(y_test)
 
-## STEP 3 ---------------------------------------------------------------------
-#retrain model with new face
+	## STEP 2 ---------------------------------------------------------------------
+	#load pretrained model
+	model = load_model('../Models/dlib_classifierV0_trained.h5')
 
-history = model.fit(
-	x_train, 
-	y_train,
-	epochs = epochs,
-	validation_data = (x_test, y_test))
+	## STEP 3 ---------------------------------------------------------------------
+	#retrain model with new face
+
+	history = model.fit(
+		x_train, 
+		y_train,
+		epochs = epochs,
+		validation_data = (x_test, y_test))
 
 
-model.save_weights('../Models/dlib_classifierV0_trained.h5')
+	model.save_weights('../Models/dlib_classifierV0_trained.h5')
 
 
