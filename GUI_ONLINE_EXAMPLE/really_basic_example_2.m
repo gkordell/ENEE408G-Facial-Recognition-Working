@@ -22,7 +22,7 @@ function varargout = really_basic_example_2(varargin)
 
 % Edit the above text to modify the response to help really_basic_example
 
-% Last Modified by GUIDE v2.5 24-Apr-2018 12:52:17
+% Last Modified by GUIDE v2.5 26-Apr-2018 14:45:42
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -54,7 +54,7 @@ function really_basic_example_OpeningFcn(hObject, eventdata, handles, varargin)
 
 % Choose default command line output for really_basic_example
 global vid
-global count = 0;
+
 handles.output = hObject;
 axes(handles.axes1);
 vid = videoinput('winvideo', 1, 'YUY2_640x480');
@@ -89,11 +89,11 @@ function pushbutton2_Callback(hObject, eventdata, handles)
     %closePreview(vid);
     img = getsnapshot(vid);
     img = ycbcr2rgb(img);
-    imwrite(img,'testfile.JPEG');
+    imwrite(img,'testfile.jpg');
 
     
     % Call petes function into car quality python(
-    quality = python('img_quality_and_extract.py','testfile.JPEG');
+    quality = python('img_quality_and_extract.py','testfile.jpg');
     % 2 = good face and here
     % 1 = face and bad quality
     % 0 = no face seen
@@ -103,8 +103,9 @@ function pushbutton2_Callback(hObject, eventdata, handles)
     
     if quality == 2
         % call recognition and load num_names store id in name
-        id = python('testfile.JPEG');
-        name = python('load_num_names_dict.py',id);
+        python('recognition.py','testfile.jpg');
+        id = load('pred.mat');
+        name = python('load_num_names_dict.py',num2str(id.pred));
         
         answer = questdlg(sprintf('Is your username: %s', name));
         if strcmp('Yes',answer) == 1
@@ -117,16 +118,16 @@ function pushbutton2_Callback(hObject, eventdata, handles)
             actual_username = inputdlg(prompt);
          
             % load names info and see if they are in dic. 
-            user_info = strsplit(python('load_names_info_dict.py', actual_username));
+            user_info = strsplit(python('load_names_info_dict.py', char(actual_username)));
             if strcmp(char(user_info(1)),'Not in dict')==1;
                 msgbox('Not in system. Please add yourself');
             else 
                 prompt = {'Enter your password:'};
                 actual_password = inputdlg(prompt)
-                if strcmp(char(user_info(4)),actual_password)==1;
+                if strcmp(char(user_info(4)),char(actual_password))==1;
                     msgbox(sprintf('Welcome, %s', name));
                     % call online training
-                    python('online_learning_V0.py','testfile.JPEG',user_info(2))
+                    python('online_learning_V0.py','testfile.jpg',user_info(2))
                     % close preview and program
                     msgbox('Goodbye');
                     
@@ -149,12 +150,12 @@ function pushbutton3_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton3 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-    dict_size = (python('get_dict_size.py'));
+    dict_size = (python('get_dict_size.py'))
     global vid
     global count
     %closePreview(vid);
-    int i = 1;
-    im_file_names = ['newface/testfile1.JPEG';'newface/testfile2.JPEG';'newface/testfile3.JPEG';'newface/testfile4.JPEG';'newface/testfile5.JPEG'];
+    i = 1;
+    im_file_names = ['newface/testfile1.jpg';'newface/testfile2.jpg';'newface/testfile3.jpg';'newface/testfile4.jpg';'newface/testfile5.jpg'];
     while (i<6)
         img = getsnapshot(vid);
         img = ycbcr2rgb(img);
@@ -169,21 +170,23 @@ function pushbutton3_Callback(hObject, eventdata, handles)
         % convert to a number
         quality = str2num(quality);
         if quality == 2 
-        msgbox(sprintf('Picture %n taken', i));
+        msgbox(sprintf('Picture %d taken', i));
         i = i+1;
         end
         
     end 
     prompt = {'Enter your username:'};
-    actual_username = inputdlg(prompt)   
-
+    actual_username = inputdlg(prompt);   
+    actual_username = char(actual_username)
+    
     prompt = {'Enter your password:'};
-    actual_password = inputdlg(prompt) 
+    actual_password = inputdlg(prompt); 
+    actual_password = char(actual_password)
     msgbox(sprintf('Welcome, %s', actual_username));
 
     % call  append_dict.py
     % with something like 
-    python('append_dict.py', num2str(dict_size), actual_username, actual_password);
+    python('append_dict.py', dict_size(1:end-1), actual_username, actual_password);
     % call augmentation (Being done in transfer
     % call transfer learning
     python('transfer_learning_V0.py','./newface');
