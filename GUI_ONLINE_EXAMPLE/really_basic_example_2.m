@@ -97,7 +97,6 @@ function pushbutton2_Callback(hObject, eventdata, handles)
     % 2 = good face and here
     % 1 = face and bad quality
     % 0 = no face seen
-    dict_size = (python('get_dict_size.py'))
     % convert to a number
     quality = str2num(quality);
     dict_size = (python('get_dict_size.py'));
@@ -107,6 +106,8 @@ function pushbutton2_Callback(hObject, eventdata, handles)
         % call recognition and load num_names store id in name
         python('recognition.py','testfile.jpg', dict_size(1:end-1));
         id = load('pred.mat');
+        id.pred
+        id.confidence
         name = python('load_num_names_dict.py',num2str(id.pred));
         
         answer = questdlg(sprintf('Is your username: %s', name));
@@ -122,20 +123,22 @@ function pushbutton2_Callback(hObject, eventdata, handles)
             actual_username = inputdlg(prompt);
          
             % load names info and see if they are in dict. 
-            user_info = strsplit(python('load_names_info_dict.py', char(actual_username)));
-            if strcmp(char(user_info(1)),'Not in dict')==1;
+            user_info = strsplit(python('load_names_info_dict.py', char(actual_username)), '"');
+            username = char(user_info(1));
+            if strcmp(username(1:end-1),'Not in dict') == 1
                 mstring = strcat('Not in system. Please add yourself');
                 set(handles.textbox,'String',mstring);
                 drawnow();
             else 
                 prompt = {'Enter your password:'};
                 actual_password = inputdlg(prompt);
-                if strcmp(char(user_info(4)),char(actual_password))==1;
+                if strcmp(char(user_info(4)),char(actual_password))==1
                     mstring = strcat('Welcome ', name);
                     set(handles.textbox,'String',mstring);
                     drawnow();
                     % call online training
-                    python('online_learning_V0.py','testfile.jpg',user_info(2),dict_size)
+                    disp(char(user_info(2)))
+                    python('online_learning_V0.py','testfile.jpg',char(user_info(2)),dict_size)
                     % close preview and program
                     mstring = strcat('We have trained on ', name, ' new images. Please try to log on again');
                     set(handles.textbox,'String',mstring);
