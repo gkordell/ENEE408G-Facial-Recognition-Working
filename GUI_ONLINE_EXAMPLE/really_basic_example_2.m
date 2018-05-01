@@ -63,7 +63,7 @@ preview(vid, hImage);
 
 % Update handles structure
 guidata(hObject, handles);
-
+            
 % UIWAIT makes really_basic_example wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 end
@@ -168,10 +168,17 @@ function pushbutton3_Callback(hObject, eventdata, handles)
         % 0 = no face seen
 
         % convert to a number
+        quality = quality(1:end-1);
         quality = str2num(quality);
         if quality == 2 
-        msgbox(sprintf('Picture %d taken', i));
-        i = i+1;
+            mstring = strcat('Picture  ', num2str(i), ' taken');
+            set(handles.textbox,'String',mstring);
+            drawnow();
+            i = i+1;
+        else
+            mstring = strcat('Bad quality picture, trying again');
+            set(handles.textbox,'String',mstring);
+            drawnow();
         end
         
     end 
