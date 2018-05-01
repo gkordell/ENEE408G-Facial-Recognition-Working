@@ -97,13 +97,15 @@ function pushbutton2_Callback(hObject, eventdata, handles)
     % 2 = good face and here
     % 1 = face and bad quality
     % 0 = no face seen
-    
+    dict_size = (python('get_dict_size.py'))
     % convert to a number
     quality = str2num(quality);
+    dict_size = (python('get_dict_size.py'));
+    dict_size = dict_size(1:end-1);
     
     if quality == 2
         % call recognition and load num_names store id in name
-        python('recognition.py','testfile.jpg');
+        python('recognition.py','testfile.jpg', dict_size(1:end-1));
         id = load('pred.mat');
         name = python('load_num_names_dict.py',num2str(id.pred));
         
@@ -119,7 +121,7 @@ function pushbutton2_Callback(hObject, eventdata, handles)
             prompt = {'Enter your username:'};
             actual_username = inputdlg(prompt);
          
-            % load names info and see if they are in dic. 
+            % load names info and see if they are in dict. 
             user_info = strsplit(python('load_names_info_dict.py', char(actual_username)));
             if strcmp(char(user_info(1)),'Not in dict')==1;
                 mstring = strcat('Not in system. Please add yourself');
@@ -133,7 +135,7 @@ function pushbutton2_Callback(hObject, eventdata, handles)
                     set(handles.textbox,'String',mstring);
                     drawnow();
                     % call online training
-                    python('online_learning_V0.py','testfile.jpg',user_info(2))
+                    python('online_learning_V0.py','testfile.jpg',user_info(2),dict_size)
                     % close preview and program
                     mstring = strcat('We have trained on ', name, ' new images. Please try to log on again');
                     set(handles.textbox,'String',mstring);
@@ -212,7 +214,7 @@ function pushbutton3_Callback(hObject, eventdata, handles)
     python('append_dict.py', dict_size(1:end-1), actual_username, actual_password);
     % call augmentation (Being done in transfer
     % call transfer learning
-    python('transfer_learning_V0.py','./newface');
+    python('transfer_learning_V0.py','./newface', dict_size(1:end-1));
 end
 
 function edit1_Callback(hObject, eventdata, handles)
