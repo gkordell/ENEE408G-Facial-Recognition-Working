@@ -109,7 +109,9 @@ function pushbutton2_Callback(hObject, eventdata, handles)
         
         answer = questdlg(sprintf('Is your username: %s', name));
         if strcmp('Yes',answer) == 1
-            questdlg(sprintf('Welcome, %s', name));
+            mstring = strcat('Welcome ', name);
+            set(handles.textbox,'String',mstring);
+            drawnow();
             % call online training
             % close preview and program 
             
@@ -120,27 +122,39 @@ function pushbutton2_Callback(hObject, eventdata, handles)
             % load names info and see if they are in dic. 
             user_info = strsplit(python('load_names_info_dict.py', char(actual_username)));
             if strcmp(char(user_info(1)),'Not in dict')==1;
-                msgbox('Not in system. Please add yourself');
+                mstring = strcat('Not in system. Please add yourself');
+                set(handles.textbox,'String',mstring);
+                drawnow();
             else 
                 prompt = {'Enter your password:'};
-                actual_password = inputdlg(prompt)
+                actual_password = inputdlg(prompt);
                 if strcmp(char(user_info(4)),char(actual_password))==1;
-                    msgbox(sprintf('Welcome, %s', name));
+                    mstring = strcat('Welcome ', name);
+                    set(handles.textbox,'String',mstring);
+                    drawnow();
                     % call online training
                     python('online_learning_V0.py','testfile.jpg',user_info(2))
                     % close preview and program
-                    msgbox('Goodbye');
+                    mstring = strcat('We have trained on ', name, ' new images. Please try to log on again');
+                    set(handles.textbox,'String',mstring);
+                    drawnow();
                     
                 else 
-                    msgbox('invalid password: Please contact sys admin');
+                    mstring = strcat('Invalid password for ', name, '. Please contact the sys admin');
+                    set(handles.textbox,'String',mstring);
+                    drawnow();
                     % close preview and program
                 end
             end
         end
     elseif quality == 1
-        msgbox('The quality of the image is too low. Please retake the photo.');
+        mstring = strcat('The quality of the image is too low. Please retake the photo.');
+        set(handles.textbox,'String',mstring);
+        drawnow();
     elseif quality == 0
-        msgbox('Thats not a face... please retake the photo');
+        mstring = strcat('Thats not a face... please retake the photo');
+        set(handles.textbox,'String',mstring);
+        drawnow();
     end
 end
 
@@ -188,8 +202,10 @@ function pushbutton3_Callback(hObject, eventdata, handles)
     
     prompt = {'Enter your password:'};
     actual_password = inputdlg(prompt); 
-    actual_password = char(actual_password)
-    msgbox(sprintf('Welcome, %s', actual_username));
+    actual_password = char(actual_password);
+    mstring = strcat('Welcome, ', actual_username);
+    set(handles.textbox,'String',mstring);
+    drawnow();
 
     % call  append_dict.py
     % with something like 
