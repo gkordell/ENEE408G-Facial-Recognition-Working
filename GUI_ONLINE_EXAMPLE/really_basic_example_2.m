@@ -63,7 +63,9 @@ preview(vid, hImage);
 
 % Update handles structure
 guidata(hObject, handles);
-            
+mstring = strcat('Log in by pressing Take Photo - or Add Yourself if a new user');
+set(handles.textbox,'String',mstring);
+drawnow();
 % UIWAIT makes really_basic_example wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 end
@@ -108,50 +110,72 @@ function pushbutton2_Callback(hObject, eventdata, handles)
         id = load('pred.mat');
         id.pred
         id.confidence
-        name = python('load_num_names_dict.py',num2str(id.pred));
-        
-        answer = questdlg(sprintf('Is your username: %s', name));
-        if strcmp('Yes',answer) == 1
-            mstring = strcat('Welcome ', name);
-            set(handles.textbox,'String',mstring);
-            drawnow();
-            % call online training
-            % close preview and program 
-            
-        elseif strcmp('Yes',answer) == 0
-            prompt = {'Enter your username:'};
-            actual_username = inputdlg(prompt);
-         
-            % load names info and see if they are in dict. 
-            user_info = strsplit(python('load_names_info_dict.py', char(actual_username)), '"');
-            username = char(user_info(1));
-            if strcmp(username(1:end-1),'Not in dict') == 1
-                mstring = strcat('Not in system. Please add yourself');
+        id.minconfidence
+        if id.confidence > 0.97
+            name = python('load_num_names_dict.py',num2str(id.pred));
+
+            answer = questdlg(sprintf('Is your username: %s', name));
+            if strcmp('Yes',answer) == 1
+                mstring = strcat('Welcome ', name);
                 set(handles.textbox,'String',mstring);
                 drawnow();
-            else 
-                prompt = {'Enter your password:'};
-                actual_password = inputdlg(prompt);
-                if strcmp(char(user_info(4)),char(actual_password))==1
-                    mstring = strcat('Welcome ', name);
+                % call online training
+                % close preview and program 
+
+            elseif strcmp('Yes',answer) == 0
+                prompt = {'Enter your username:'};
+                actual_username = inputdlg(prompt);
+
+                % load names info and see if they are in dict. 
+                user_info = strsplit(python('load_names_info_dict.py', char(actual_username)), '"');
+                username = char(user_info(1));
+                if strcmp(username(1:end-1),'Not in dict') == 1
+                    mstring = strcat('Not in system. Please add yourself');
                     set(handles.textbox,'String',mstring);
                     drawnow();
-                    % call online training
-                    disp(char(user_info(2)))
-                    python('online_learning_V0.py','testfile.jpg',char(user_info(2)),dict_size)
-                    % close preview and program
-                    mstring = strcat('We have trained on ', name, ' new images. Please try to log on again');
-                    set(handles.textbox,'String',mstring);
-                    drawnow();
-                    
                 else 
-                    mstring = strcat('Invalid password for ', name, '. Please contact the sys admin');
-                    set(handles.textbox,'String',mstring);
-                    drawnow();
-                    % close preview and program
+                    prompt = {'Enter your password:'};
+                    actual_password = inputdlg(prompt);
+                    if strcmp(char(user_info(4)),char(actual_password))==1
+                        mstring = strcat('Welcome ', name);
+                        set(handles.textbox,'String',mstring);
+                        drawnow();
+                        % call online training
+                        disp(char(user_info(2)))
+                        python('online_learning_V0.py','testfile.jpg',char(user_info(2)),dict_size)
+                        % close preview and program
+                        mstring = strcat('We have trained on ', name, ' new images. Please try to log on again');
+                        set(handles.textbox,'String',mstring);
+                        drawnow();
+
+                    else 
+                        mstring = strcat('Invalid password for ', name, '. Please contact the sys admin');
+                        set(handles.textbox,'String',mstring);
+                        drawnow();
+                        % close preview and program
+                    end
                 end
             end
-        end
+          % (this is the end of the if confidence > 0.98 section)
+        else % this is the if confidence < THRESHOLD section        
+            mstring = strcat('Your face was not recognized as known user.');
+            set(handles.textbox,'String',mstring);
+            drawnow();
+            prompt = {'You were not recognized. Enter your username:'};
+            actual_username = inputdlg(prompt);
+
+            % load names info and see if they are in dict. 
+            user_info = strsplit(python('load_names_info_dict.py', char(actual_username)), '''');
+            username = char(user_info(1));
+            prompt = {'Enter your password:'};
+            actual_password = inputdlg(prompt);
+            if strcmp(char(user_info(4)),char(actual_password))==1
+                mstring = strcat('Welcome ', actual_username);
+                set(handles.textbox,'String',mstring);
+                drawnow();
+            end
+            
+        end % (this is the end of the if quality = 2 section)
     elseif quality == 1
         mstring = strcat('The quality of the image is too low. Please retake the photo.');
         set(handles.textbox,'String',mstring);
