@@ -106,12 +106,14 @@ function pushbutton2_Callback(hObject, eventdata, handles)
     
     if quality == 2
         % call recognition and load num_names store id in name
-        python('recognition.py','testfile.jpg', dict_size(1:end-1));
+        python('recognition.py','testfile.jpg', dict_size);
         id = load('pred.mat');
         id.pred
-        id.confidence
-        id.minconfidence
-        if id.confidence > 0.97
+        confidence = id.confidence
+        id.minconfidence;
+        id.num;
+
+        if confidence > 0.99    % let them in if really high confidence
             name = python('load_num_names_dict.py',num2str(id.pred));
 
             answer = questdlg(sprintf('Is your username: %s', name));
@@ -121,6 +123,68 @@ function pushbutton2_Callback(hObject, eventdata, handles)
                 drawnow();
                 % call online training
                 % close preview and program 
+
+            elseif strcmp('Yes',answer) == 0
+                prompt = {'Enter your username:'};
+                actual_username = inputdlg(prompt);
+
+                % load names info and see if they are in dict. 
+                user_info = strsplit(python('load_names_info_dict.py', char(actual_username)), '"');
+                username = char(user_info(1));
+                if strcmp(username(1:end-1),'Not in dict') == 1
+                    mstring = strcat('Not in system. Please add yourself');
+                    set(handles.textbox,'String',mstring);
+                    drawnow();
+                else 
+                    prompt = {'Enter your password:'};
+                    actual_password = inputdlg(prompt);
+                    if strcmp(char(user_info(4)),char(actual_password))==1
+                        mstring = strcat('Welcome ', name);
+                        set(handles.textbox,'String',mstring);
+                        drawnow();
+                        % call online training
+                        %disp(char(user_info(2)))
+                        %python('online_learning_V0.py','testfile.jpg',char(user_info(2)),dict_size)
+                        % close preview and program
+                        mstring = strcat('We have trained on ', name, ' new images. Please try to log on again');
+                        set(handles.textbox,'String',mstring);
+                        drawnow();
+
+                    else 
+                        mstring = strcat('Invalid password for ', name, '. Please contact the sys admin');
+                        set(handles.textbox,'String',mstring);
+                        drawnow();
+                        % close preview and program
+                    end
+                end
+            end
+          % (this is the end of the if confidence > SECOND_LOWEST THRESHOLD section)
+        elseif confidence > 0.96 % this is the medium confidence case
+            
+            name = python('load_num_names_dict.py',num2str(id.pred));
+            user_info = strsplit(python('load_names_info_dict.py', char(name)), '''');
+            answer = questdlg(sprintf('Is your username: %s', name));
+            if strcmp('Yes',answer) == 1
+                    prompt = {'Enter your password:'};
+                    actual_password = inputdlg(prompt);
+                    if strcmp(char(user_info(4)),char(actual_password))==1
+                        mstring = strcat('Welcome ', name);
+                        set(handles.textbox,'String',mstring);
+                        drawnow();
+                        % call online training
+                        disp(char(user_info(2)))
+                        python('online_learning_V0.py','testfile.jpg',char(user_info(2)),dict_size)
+                        % close preview and program
+                        mstring = strcat('We have trained on ', name, ' new images. Please try to log on again');
+                        set(handles.textbox,'String',mstring);
+                        drawnow();
+
+                    else 
+                        mstring = strcat('Invalid password for ', name, '. Please contact the sys admin');
+                        set(handles.textbox,'String',mstring);
+                        drawnow();
+                        % close preview and program
+                    end
 
             elseif strcmp('Yes',answer) == 0
                 prompt = {'Enter your username:'};
@@ -156,8 +220,7 @@ function pushbutton2_Callback(hObject, eventdata, handles)
                     end
                 end
             end
-          % (this is the end of the if confidence > 0.98 section)
-        else % this is the if confidence < THRESHOLD section        
+        else % this is the if confidence < LOWEST_THRESHOLD section        
             mstring = strcat('Your face was not recognized as known user.');
             set(handles.textbox,'String',mstring);
             drawnow();
@@ -169,7 +232,11 @@ function pushbutton2_Callback(hObject, eventdata, handles)
             username = char(user_info(1));
             prompt = {'Enter your password:'};
             actual_password = inputdlg(prompt);
-            if strcmp(char(user_info(4)),char(actual_password))==1
+            if strcmp(username(1:end-1), 'Not in dict') == 1
+                mstring = strcat('Your username is not recognized, please add yourself');
+                set(handles.textbox,'String',mstring);
+                drawnow();                
+            elseif strcmp(char(user_info(4)),char(actual_password))==1
                 mstring = strcat('Welcome ', actual_username);
                 set(handles.textbox,'String',mstring);
                 drawnow();
@@ -232,7 +299,7 @@ function pushbutton3_Callback(hObject, eventdata, handles)
     prompt = {'Enter your password:'};
     actual_password = inputdlg(prompt); 
     actual_password = char(actual_password);
-    mstring = strcat('Welcome, ', actual_username);
+    mstring = strcat('Welcome, ', actual_username, ' you are being added to the database');
     set(handles.textbox,'String',mstring);
     drawnow();
 
