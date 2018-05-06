@@ -47,6 +47,7 @@ if __name__ == "__main__":
     new_img_dir = sys.argv[1]
     current_num_classes = int(sys.argv[2])
     #new_img_dir = './newface'
+    #current_num_classes = 530
     ## STEP 1 ---------------------------------------------------------------------
     #import data
     if current_num_classes != 530:
@@ -81,7 +82,7 @@ if __name__ == "__main__":
     
     ## STEP 4 ---------------------------------------------------------------------
     
-    num_train = 140   # how many out of the augmented new images will be put in train
+    num_train = 120   # how many out of the augmented new images will be put in train
                     # rest will be put in test
     
     new_y_train_cats = np.zeros([1,num_train])
@@ -184,7 +185,7 @@ if __name__ == "__main__":
     print_new_acc = NewImgAccuracy()
     
     new_model.compile(loss = categorical_crossentropy, optimizer = 'adam', metrics = ['accuracy'])
-    epochs = 5
+    epochs = 3
     history = new_model.fit(x_train, y_train, batch_size = batch_size, epochs = epochs, callbacks = [print_new_acc])
     
     overall_score = new_model.evaluate(x_test, y_test, verbose=0)

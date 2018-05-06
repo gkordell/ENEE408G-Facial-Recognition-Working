@@ -17,8 +17,9 @@ batch_size = 2
 
 if __name__ == "__main__":
     filename = sys.argv[1]
-    #filename = 'testfile.jpg'
+    #filename = 'testfile1.jpg'
     current_num_classes = int(sys.argv[2])
+    #current_num_classes = 531
     if current_num_classes == 530:
         model = load_model('./keras_models/dlib_classifierV0_trained.h5')
         x_train = sio.loadmat('dlib_features/train_features.mat')['train_features']
